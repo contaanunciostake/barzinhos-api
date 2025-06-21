@@ -33,7 +33,11 @@ jwt.init_app(app)
 db.init_app(app)
 
 # CORS: permitir apenas o domínio do front
-CORS(app, resources={r"/api/*": {"origins": ["https://barzinhos-front.onrender.com"]}})
+CORS(app, resources={r"/api/*": {"origins": [
+    "https://barzinhos-front.onrender.com",
+    "http://localhost:5173"
+]}}, supports_credentials=True, allow_headers="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+
 
 # Blueprints
 app.register_blueprint(user_bp, url_prefix="/api")
