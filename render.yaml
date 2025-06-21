@@ -11,5 +11,5 @@ services:
         generateValue: true
       - key: JWT_SECRET_KEY
         generateValue: true
-
-
+      - key: DATABASE_URL
+        value: sqlite:///app.db  # ou use PostgreSQL se for usar banco externo
