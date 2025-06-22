@@ -11,31 +11,24 @@ from src.models.establishment import Establishment
 auth_bp = Blueprint("auth", __name__)
 jwt = JWTManager()
 
-# Registro de usuário comum
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.json
     email = data.get("email")
     password = data.get("password")
     username = data.get("username")
-    role = data.get("role", "user")  # padrão "user"
+    role = data.get("role", "user")  # padrão "user" se não informado
 
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email já cadastrado"}), 409
 
     hashed_password = generate_password_hash(password)
-    user = User(
-        username=username,
-        email=email,
-        password_hash=hashed_password,
-        role=role
-    )
+    user = User(username=username, email=email, password_hash=hashed_password, role=role)
     db.session.add(user)
     db.session.commit()
 
     return jsonify({"message": "Usuário registrado com sucesso!"}), 201
 
-# Login de usuário (retorna token + info)
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.json
@@ -57,14 +50,12 @@ def login():
         }
     }), 200
 
-# Rota protegida de exemplo
 @auth_bp.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-# Cadastro de estabelecimento com vinculação ao User
 @auth_bp.route("/register-establishment", methods=["POST"])
 def register_establishment():
     try:
@@ -76,27 +67,20 @@ def register_establishment():
                 return jsonify({"success": False, "error": f"Campo obrigatório: {field}"}), 400
 
         if User.query.filter_by(email=data["email"]).first():
-            return jsonify({
-                "success": False,
-                "error": "Email já cadastrado como usuário ou estabelecimento."
-            }), 409
+            return jsonify({"success": False, "error": "Email já cadastrado como usuário ou estabelecimento."}), 409
 
         hashed_password = generate_password_hash(data["password"])
-        user = User(
-            username=data["name"],  # Usa o nome do bar como username
-            email=data["email"],
-            password_hash=hashed_password,
-            role="establishment"
-        )
+        user = User(email=data["email"], password=hashed_password, role="establishment")
         db.session.add(user)
-        db.session.flush()  # Para pegar user.id antes do commit
+        db.session.flush() # Use flush to get user.id before commit
 
         establishment = Establishment(
             user_id=user.id,
             name=data["name"],
             type=data["type"],
-            is_approved=False  # aguardando aprovação
+            is_approved=False # New establishments are not approved by default
         )
+
         db.session.add(establishment)
         db.session.commit()
 
@@ -109,3 +93,5 @@ def register_establishment():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
+
+

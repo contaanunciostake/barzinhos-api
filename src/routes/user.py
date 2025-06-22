@@ -1,50 +1,111 @@
-from flask import Blueprint, jsonify, request
-from src.models.user import User, db
-from werkzeug.security import generate_password_hash
+from flask import Blueprint, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
 
-user_bp = Blueprint('user', __name__)
+from src.models.base import db
+from src.models.user import User
+from src.models.establishment import Establishment
 
-@user_bp.route('/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
-    return jsonify([user.to_dict() for user in users])
+auth_bp = Blueprint("auth", __name__)
+jwt = JWTManager()
 
-@user_bp.route('/users', methods=['POST'])
-def create_user():
-    
+# Registro de usuário comum
+@auth_bp.route("/register", methods=["POST"])
+def register():
     data = request.json
-    def create_user():
-    data = request.json
-    hashed_password = generate_password_hash(data['password'])
-    
+    email = data.get("email")
+    password = data.get("password")
+    username = data.get("username")
+    role = data.get("role", "user")  # padrão "user"
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Email já cadastrado"}), 409
+
+    hashed_password = generate_password_hash(password)
     user = User(
-        username=data['username'],
-        email=data['email'],
-        password_hash=hashed_password,  # <- ESSENCIAL
-        role=data.get('role', 'user')   # opcional: admin / establishment
+        username=username,
+        email=email,
+        password_hash=hashed_password,
+        role=role
     )
-    
     db.session.add(user)
     db.session.commit()
-    return jsonify(user.to_dict()), 201
 
-@user_bp.route('/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    user = User.query.get_or_404(user_id)
-    return jsonify(user.to_dict())
+    return jsonify({"message": "Usuário registrado com sucesso!"}), 201
 
-@user_bp.route('/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
-    user = User.query.get_or_404(user_id)
+# Login de usuário (retorna token + info)
+@auth_bp.route("/login", methods=["POST"])
+def login():
     data = request.json
-    user.username = data.get('username', user.username)
-    user.email = data.get('email', user.email)
-    db.session.commit()
-    return jsonify(user.to_dict())
+    email = data.get("email")
+    password = data.get("password")
 
-@user_bp.route('/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    user = User.query.get_or_404(user_id)
-    db.session.delete(user)
-    db.session.commit()
-    return '', 204
+    user = User.query.filter_by(email=email).first()
+    if not user or not check_password_hash(user.password_hash, password):
+        return jsonify({"error": "Credenciais inválidas"}), 401
+
+    access_token = create_access_token(identity=user.email)
+    return jsonify({
+        "access_token": access_token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role
+        }
+    }), 200
+
+# Rota protegida de exemplo
+@auth_bp.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
+
+# Cadastro de estabelecimento com vinculação ao User
+@auth_bp.route("/register-establishment", methods=["POST"])
+def register_establishment():
+    try:
+        data = request.get_json()
+
+        required_fields = ["name", "type", "email", "password"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"success": False, "error": f"Campo obrigatório: {field}"}), 400
+
+        if User.query.filter_by(email=data["email"]).first():
+            return jsonify({
+                "success": False,
+                "error": "Email já cadastrado como usuário ou estabelecimento."
+            }), 409
+
+        hashed_password = generate_password_hash(data["password"])
+        user = User(
+            username=data["name"],  # Usa o nome do bar como username
+            email=data["email"],
+            password_hash=hashed_password,
+            role="establishment"
+        )
+        db.session.add(user)
+        db.session.flush()  # Para pegar user.id antes do commit
+
+        establishment = Establishment(
+            user_id=user.id,
+            name=data["name"],
+            type=data["type"],
+            is_approved=False  # aguardando aprovação
+        )
+        db.session.add(establishment)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Estabelecimento registrado com sucesso. Aguardando aprovação.",
+            "data": establishment.to_dict()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
