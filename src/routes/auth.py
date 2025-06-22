@@ -36,7 +36,15 @@ def login():
         return jsonify({"error": "Credenciais inválidas"}), 401
 
     access_token = create_access_token(identity=user.email)
-    return jsonify({"access_token": access_token, "role": user.role, "user_id": user.id}), 200
+        return jsonify({
+    "access_token": access_token,
+    "user": {
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role
+    }
+}), 200
 
 @auth_bp.route("/protected", methods=["GET"])
 @jwt_required()
