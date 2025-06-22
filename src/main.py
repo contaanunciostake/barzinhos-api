@@ -7,7 +7,7 @@ from flask_cors import CORS
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Imports internos
-from src.models.user import db
+from src.models.base import db # Importar db de base.py
 from src.routes.user import user_bp
 from src.routes.establishment import establishment_bp
 from src.routes.automation import automation_bp
@@ -35,7 +35,8 @@ db.init_app(app)
 # CORS: permitir apenas o domínio do front
 CORS(app, resources={r"/api/*": {"origins": [
     "https://barzinhos-front.onrender.com",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "https://barzinhos-api.onrender.com" # Adicionado para permitir chamadas da própria API, se necessário
 ]}}, supports_credentials=True, allow_headers="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 
@@ -62,3 +63,5 @@ def health_check():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+

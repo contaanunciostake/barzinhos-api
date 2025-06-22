@@ -1,18 +1,19 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from src.models.user import User, db
+from src.models.user import User
 from src.models.establishment import Establishment
+from src.models.base import db # Importar db de base.py
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint("auth", __name__)
 jwt = JWTManager()
 
-@auth_bp.route('/register', methods=['POST'])
+@auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.json
-    email = data.get('email')
-    password = data.get('password')
-    role = data.get('role', 'user') # Default role to 'user'
+    email = data.get("email")
+    password = data.get("password")
+    role = data.get("role", "user") # Default role to "user"
 
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email já cadastrado"}), 409
@@ -24,11 +25,11 @@ def register():
 
     return jsonify({"message": "Usuário registrado com sucesso!"}), 201
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.json
-    email = data.get('email')
-    password = data.get('password')
+    email = data.get("email")
+    password = data.get("password")
 
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password, password):
@@ -37,34 +38,34 @@ def login():
     access_token = create_access_token(identity=user.email)
     return jsonify({"access_token": access_token, "role": user.role, "user_id": user.id}), 200
 
-@auth_bp.route('/protected', methods=['GET'])
+@auth_bp.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-@auth_bp.route('/register-establishment', methods=['POST'])
+@auth_bp.route("/register-establishment", methods=["POST"])
 def register_establishment():
     try:
         data = request.get_json()
 
-        required_fields = ['name', 'type', 'email', 'password']
+        required_fields = ["name", "type", "email", "password"]
         for field in required_fields:
             if field not in data:
                 return jsonify({"success": False, "error": f"Campo obrigatório: {field}"}), 400
 
-        if User.query.filter_by(email=data['email']).first():
+        if User.query.filter_by(email=data["email"]).first():
             return jsonify({"success": False, "error": "Email já cadastrado como usuário ou estabelecimento."}), 409
 
-        hashed_password = generate_password_hash(data['password'])
-        user = User(email=data['email'], password=hashed_password, role='establishment')
+        hashed_password = generate_password_hash(data["password"])
+        user = User(email=data["email"], password=hashed_password, role="establishment")
         db.session.add(user)
         db.session.flush() # Use flush to get user.id before commit
 
         establishment = Establishment(
             user_id=user.id,
-            name=data['name'],
-            type=data['type'],
+            name=data["name"],
+            type=data["type"],
             is_approved=False # New establishments are not approved by default
         )
 
