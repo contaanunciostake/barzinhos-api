@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn src.main:app"
+    startCommand: "python src/main.py"
     pythonVersion: 3.11
     envVars:
       - key: FLASK_ENV
