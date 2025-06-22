@@ -5,7 +5,6 @@ services:
     plan: free
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python src/main.py"
-    pythonVersion: 3.11
     envVars:
       - key: FLASK_ENV
         value: production
@@ -14,6 +13,6 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: postgresql://barzinhos_db_4ald_user:CsfGDEeZs55YdekzZN2Hm6fjl315EGmp@dpg-d1c8cumr433s7385uosg-a.oregon-postgres.render.com/barzinhos_db_4ald
+        value: sqlite:///app.db
       - key: CORS_ORIGINS
         value: http://localhost:5173,https://barzinhos-front.vercel.app,https://barzinhos-api.onrender.com
