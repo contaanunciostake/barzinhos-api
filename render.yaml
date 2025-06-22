@@ -14,4 +14,6 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:///app.db  # aqui você pode substituir pelo PostgreSQL real
+        value: postgresql://barzinhos_db_4ald_user:CsfGDEeZs55YdekzZN2Hm6fjl315EGmp@dpg-d1c8cumr433s7385uosg-a.oregon-postgres.render.com/barzinhos_db_4ald
+      - key: CORS_ORIGINS
+        value: http://localhost:5173,https://barzinhos-front.vercel.app,https://barzinhos-api.onrender.com
