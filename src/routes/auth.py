@@ -25,23 +25,26 @@ def register():
 
     return jsonify({"message": "Usuário registrado com sucesso!"}), 201
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
+    data = request.json
     email = data.get("email")
     password = data.get("password")
 
     user = User.query.filter_by(email=email).first()
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({"error": "Credenciais inválidas"}), 401
 
-    if user and check_password_hash(user.password_hash, password):
-        access_token = create_access_token(identity=user.id)
-        return jsonify({
-            "access_token": access_token,
-            "user": user.to_dict()  # <- ESSA LINHA com indentação correta
-        }), 200
-
-    return jsonify({"error": "Credenciais inválidas"}), 401
-
+    access_token = create_access_token(identity=user.email)
+return jsonify({
+    "access_token": access_token,
+    "user": {
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role
+    }
+}), 200
 @auth_bp.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
