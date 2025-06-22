@@ -1,9 +1,12 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
+
+from src.models.base import db
 from src.models.user import User
-from src.models.establishment import Establishment
-from src.models.base import db # Importar db de base.py
+from src.models.establishment import Establishmentt
 
 auth_bp = Blueprint("auth", __name__)
 jwt = JWTManager()
@@ -13,13 +16,14 @@ def register():
     data = request.json
     email = data.get("email")
     password = data.get("password")
-    role = data.get("role", "user") # Default role to "user"
+    username = data.get("username")
+    role = data.get("role", "user")  # padrão "user" se não informado
 
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email já cadastrado"}), 409
 
     hashed_password = generate_password_hash(password)
-    user = User(email=email, password=hashed_password, role=role)
+    user = User(username=username, email=email, password_hash=hashed_password, role=role)
     db.session.add(user)
     db.session.commit()
 
@@ -32,19 +36,20 @@ def login():
     password = data.get("password")
 
     user = User.query.filter_by(email=email).first()
-    if not user or not check_password_hash(user.password, password):
+    if not user or not check_password_hash(user.password_hash, password):
         return jsonify({"error": "Credenciais inválidas"}), 401
 
     access_token = create_access_token(identity=user.email)
-return jsonify({
-    "access_token": access_token,
-    "user": {
-        "id": user.id,
-        "email": user.email,
-        "username": user.username,
-        "role": user.role
-    }
-}), 200
+    return jsonify({
+        "access_token": access_token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role
+        }
+    }), 200
+
 @auth_bp.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
