@@ -1,13 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from src.models.user import db, User  # Importando User para usar no relacionamento
+from src.models.base import db
 
 class Establishment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
     # Novo campo obrigatório para associação ao usuário (dono do estabelecimento)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship("User", backref="establishments")
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_rel = db.relationship("User", backref="establishments_rel") # Renomeado backref para evitar conflito
 
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
@@ -75,7 +75,7 @@ class Review(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<Review {self.rating} stars for {self.establishment_id}>'
+        return f'Review {self.rating} stars for {self.establishment_id}>'
 
     def to_dict(self):
         return {
@@ -96,7 +96,7 @@ class EstablishmentImage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<EstablishmentImage {self.image_url}>'
+        return f'EstablishmentImage {self.image_url}>'
 
     def to_dict(self):
         return {
@@ -106,3 +106,5 @@ class EstablishmentImage(db.Model):
             'is_primary': self.is_primary,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+

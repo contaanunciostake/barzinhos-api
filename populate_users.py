@@ -1,18 +1,22 @@
-from src.models.user import User, db
+from src.models.user import User
 from src.models.establishment import Establishment
 from src.main import app
 from werkzeug.security import generate_password_hash
+from src.models.base import db # Import db from base.py
 
 with app.app_context():
+    # Drop all tables and recreate them to ensure fresh start
+    db.drop_all()
+    db.create_all()
+
     # Create admin user if not exists
     admin_email = "admin@barzinhos.com"
     admin_user = User.query.filter_by(email=admin_email).first()
     if not admin_user:
         hashed_password = generate_password_hash("admin123")
         new_admin = User(
-            username="admin",  # <-- adicionado
             email=admin_email,
-            password_hash=hashed_password,  # <-- corrigido
+            password=hashed_password,
             role="admin"
         )
         db.session.add(new_admin)
@@ -27,13 +31,12 @@ with app.app_context():
     if not establishment_user:
         hashed_password = generate_password_hash("123456")
         new_establishment_user = User(
-            username="bardexemplo",  # <-- adicionado
             email=establishment_email,
-            password_hash=hashed_password,  # <-- corrigido
+            password=hashed_password,
             role="establishment"
         )
         db.session.add(new_establishment_user)
-        db.session.flush()  # Para obter o ID antes do commit
+        db.session.flush()
 
         new_establishment = Establishment(
             user_id=new_establishment_user.id,
@@ -48,3 +51,5 @@ with app.app_context():
         print(f"Establishment user {establishment_email} created and approved.")
     else:
         print(f"Establishment user {establishment_email} already exists.")
+
+

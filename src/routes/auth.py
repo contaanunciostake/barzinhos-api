@@ -2,29 +2,28 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from src.models.user import User, db
-from src.models.establishment import Establishment  # ✅ Import necessário
+from src.models.establishment import Establishment
 
 auth_bp = Blueprint('auth', __name__)
 jwt = JWTManager()
 
-# Rota de registro de usuário
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.json
     email = data.get('email')
     password = data.get('password')
+    role = data.get('role', 'user') # Default role to 'user'
 
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email já cadastrado"}), 409
 
     hashed_password = generate_password_hash(password)
-    user = User(email=email, password=hashed_password)
+    user = User(email=email, password=hashed_password, role=role)
     db.session.add(user)
     db.session.commit()
 
     return jsonify({"message": "Usuário registrado com sucesso!"}), 201
 
-# Rota de login
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -36,32 +35,37 @@ def login():
         return jsonify({"error": "Credenciais inválidas"}), 401
 
     access_token = create_access_token(identity=user.email)
-    return jsonify({"access_token": access_token}), 200
+    return jsonify({"access_token": access_token, "role": user.role, "user_id": user.id}), 200
 
-# Rota protegida para teste
 @auth_bp.route('/protected', methods=['GET'])
 @jwt_required()
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-# ✅ Rota para cadastro rápido de estabelecimento
 @auth_bp.route('/register-establishment', methods=['POST'])
-@jwt_required()
 def register_establishment():
-    """Registra um novo estabelecimento com dados mínimos"""
     try:
         data = request.get_json()
 
-        required_fields = ['name', 'type']
+        required_fields = ['name', 'type', 'email', 'password']
         for field in required_fields:
             if field not in data:
                 return jsonify({"success": False, "error": f"Campo obrigatório: {field}"}), 400
 
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({"success": False, "error": "Email já cadastrado como usuário ou estabelecimento."}), 409
+
+        hashed_password = generate_password_hash(data['password'])
+        user = User(email=data['email'], password=hashed_password, role='establishment')
+        db.session.add(user)
+        db.session.flush() # Use flush to get user.id before commit
+
         establishment = Establishment(
+            user_id=user.id,
             name=data['name'],
             type=data['type'],
-            is_approved=True  # Assume aprovado no registro rápido
+            is_approved=False # New establishments are not approved by default
         )
 
         db.session.add(establishment)
@@ -69,10 +73,12 @@ def register_establishment():
 
         return jsonify({
             "success": True,
-            "message": "Estabelecimento registrado com sucesso",
+            "message": "Estabelecimento registrado com sucesso. Aguardando aprovação.",
             "data": establishment.to_dict()
         }), 201
 
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
+
+
