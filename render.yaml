@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn src.main:app"
+    startCommand: "python src/main.py"
     envVars:
       - key: FLASK_ENV
         value: production
@@ -13,6 +13,6 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: postgresql://... # seu link PostgreSQL
+        value: postgresql://barzinhos_db_4ald_user:CsfGDEeZs55YdekzZN2Hm6fjl315EGmp@dpg-d1c8cumr433s7385uosg-a.oregon-postgres.render.com/barzinhos_db_4ald
       - key: CORS_ORIGINS
-        value: http://localhost:5173,https://barzinhos-front.vercel.app
+        value: https://barzinhos-front.vercel.app,https://barzinhos-front.netlify.app
