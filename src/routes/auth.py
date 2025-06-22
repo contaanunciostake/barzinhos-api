@@ -70,7 +70,7 @@ def register_establishment():
             return jsonify({"success": False, "error": "Email já cadastrado como usuário ou estabelecimento."}), 409
 
         hashed_password = generate_password_hash(data["password"])
-        user = User(email=data["email"], password=hashed_password, role="establishment")
+        user = User(email=data["email"], password_hash=hashed_password, role="establishment")
         db.session.add(user)
         db.session.flush() # Use flush to get user.id before commit
 
