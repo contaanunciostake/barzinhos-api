@@ -2,8 +2,10 @@ services:
   - type: web
     name: barzinhos-api
     env: python
+    plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python src/main.py"
+    startCommand: "gunicorn src.main:app"
+    pythonVersion: 3.11
     envVars:
       - key: FLASK_ENV
         value: production
@@ -12,4 +14,4 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:///app.db  # ou use PostgreSQL se for usar banco externo
+        value: sqlite:///app.db  # aqui você pode substituir pelo PostgreSQL real
