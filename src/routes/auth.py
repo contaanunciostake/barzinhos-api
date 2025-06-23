@@ -63,23 +63,23 @@ def register_establishment():
 
         required_fields = ['name', 'type', 'email', 'password', 'address', 'neighborhood']
         for field in required_fields:
-            if field not in data or not data[field]:
+            if field not in data:
                 return jsonify({"success": False, "error": f"Campo obrigatório: {field}"}), 400
 
         if User.query.filter_by(email=data['email']).first():
-            return jsonify({"success": False, "error": "Email já cadastrado."}), 409
+            return jsonify({"success": False, "error": "Email já cadastrado como usuário ou estabelecimento."}), 409
 
         hashed_password = generate_password_hash(data['password'])
         user = User(email=data['email'], password=hashed_password, role='establishment')
         db.session.add(user)
-        db.session.flush()
+        db.session.flush()  # Usar flush para obter user.id antes do commit
 
         establishment = Establishment(
             user_id=user.id,
             name=data['name'],
             type=data['type'],
-            address=data.get('address', ''),
-            neighborhood=data.get('neighborhood', ''),
+            address=data['address'],
+            neighborhood=data['neighborhood'],
             description=data.get('description', ''),
             phone=data.get('phone', ''),
             whatsapp=data.get('whatsapp', ''),
@@ -88,9 +88,9 @@ def register_establishment():
             website=data.get('website', ''),
             instagram=data.get('instagram', ''),
             plan_type=data.get('plan_type', 'bronze'),
-            is_open=data.get('is_open', True),
             image_url=data.get('image_url', ''),
             menu_url=data.get('menu_url', ''),
+            is_open=data.get('is_open', True),
             is_approved=False
         )
 
