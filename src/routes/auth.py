@@ -22,10 +22,10 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email já cadastrado"}), 409
 
-    hashed_password = generate_password_hash(password)
-    user = User(username=username, email=email, password_hash=hashed_password, role=role)
+    user = User(email=data['email'], role='establishment')
+    user.set_password(data['password'])  # ✅ Isso evita erro 500 e usa o método seguro
     db.session.add(user)
-    db.session.commit()
+    db.session.flush()  # Para obter user.id antes do commit
 
     return jsonify({"message": "Usuário registrado com sucesso!"}), 201
 
