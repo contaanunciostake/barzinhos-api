@@ -4,10 +4,10 @@ from src.models.base import db
 
 class Establishment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    
-    # Novo campo obrigatório para associação ao usuário (dono do estabelecimento)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    user_rel = db.relationship("User", backref="establishments_rel") # Renomeado backref para evitar conflito
+
+    # Corrigido: nome da tabela correta é "users"
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_rel = db.relationship("User", backref="establishments_rel")
 
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
@@ -15,7 +15,7 @@ class Establishment(db.Model):
     neighborhood = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20))
     whatsapp = db.Column(db.String(20))
-    type = db.Column(db.String(50), nullable=False)  # Boteco, Choperia, Petiscaria, etc.
+    type = db.Column(db.String(50), nullable=False)
     is_open = db.Column(db.Boolean, default=True)
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
@@ -23,12 +23,11 @@ class Establishment(db.Model):
     menu_url = db.Column(db.String(200))
     website = db.Column(db.String(200))
     instagram = db.Column(db.String(100))
-    plan_type = db.Column(db.String(20), default='bronze')  # bronze, prata, ouro
+    plan_type = db.Column(db.String(20), default='bronze')
     is_approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relacionamento com avaliações
     reviews = db.relationship('Review', backref='establishment', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
@@ -65,12 +64,13 @@ class Establishment(db.Model):
             return 0
         return sum(review.rating for review in self.reviews) / len(self.reviews)
 
+
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     establishment_id = db.Column(db.Integer, db.ForeignKey('establishment.id'), nullable=False)
     user_name = db.Column(db.String(100), nullable=False)
     user_email = db.Column(db.String(120))
-    rating = db.Column(db.Integer, nullable=False)  # 1-5 estrelas
+    rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -87,6 +87,7 @@ class Review(db.Model):
             'comment': self.comment,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
 
 class EstablishmentImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -106,5 +107,3 @@ class EstablishmentImage(db.Model):
             'is_primary': self.is_primary,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
-
-
