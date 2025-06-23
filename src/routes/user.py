@@ -21,13 +21,13 @@ def create_user():
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email já cadastrado'}), 409
 
-    hashed_password = generate_password_hash(data['password'])
     user = User(
         username=data['username'],
         email=data['email'],
-        password_hash=hashed_password,
-        role=data.get('role', 'user')  # padrão: 'user'
+        role=data.get('role', 'user')
     )
+    user.set_password(data['password'])
+
     db.session.add(user)
     db.session.commit()
     return jsonify(user.to_dict()), 201
