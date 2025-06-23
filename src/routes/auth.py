@@ -56,29 +56,42 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-@auth_bp.route("/register-establishment", methods=["POST"])
+@auth_bp.route('/register-establishment', methods=['POST'])
 def register_establishment():
     try:
         data = request.get_json()
 
-        required_fields = ["name", "type", "email", "password"]
+        required_fields = ['name', 'type', 'email', 'password', 'address', 'neighborhood']
         for field in required_fields:
-            if field not in data:
+            if field not in data or not data[field]:
                 return jsonify({"success": False, "error": f"Campo obrigatório: {field}"}), 400
 
-        if User.query.filter_by(email=data["email"]).first():
-            return jsonify({"success": False, "error": "Email já cadastrado como usuário ou estabelecimento."}), 409
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({"success": False, "error": "Email já cadastrado."}), 409
 
-        hashed_password = generate_password_hash(data["password"])
-        user = User(email=data["email"], password_hash=hashed_password, role="establishment")
+        hashed_password = generate_password_hash(data['password'])
+        user = User(email=data['email'], password=hashed_password, role='establishment')
         db.session.add(user)
-        db.session.flush() # Use flush to get user.id before commit
+        db.session.flush()
 
         establishment = Establishment(
             user_id=user.id,
-            name=data["name"],
-            type=data["type"],
-            is_approved=False # New establishments are not approved by default
+            name=data['name'],
+            type=data['type'],
+            address=data.get('address', ''),
+            neighborhood=data.get('neighborhood', ''),
+            description=data.get('description', ''),
+            phone=data.get('phone', ''),
+            whatsapp=data.get('whatsapp', ''),
+            latitude=data.get('latitude'),
+            longitude=data.get('longitude'),
+            website=data.get('website', ''),
+            instagram=data.get('instagram', ''),
+            plan_type=data.get('plan_type', 'bronze'),
+            is_open=data.get('is_open', True),
+            image_url=data.get('image_url', ''),
+            menu_url=data.get('menu_url', ''),
+            is_approved=False
         )
 
         db.session.add(establishment)
