@@ -65,18 +65,36 @@ def get_establishment(establishment_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@establishment_bp.route('/establishments', methods=['POST'])
+@establishment_bp.route('/register-establishment', methods=['POST'])
 @cross_origin()
-def create_establishment():
+def register_establishment():
     try:
         data = request.get_json()
-        required_fields = ['name', 'address', 'neighborhood', 'type']
-        for field in required_fields:
+
+        required_user_fields = ['email', 'password']
+        for field in required_user_fields:
             if field not in data:
-                return jsonify({'success': False, 'error': f'Campo obrigatório: {field}'}), 400
+                return jsonify({"error": f"Campo obrigatório: {field}", "success": False}), 400
+
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({"error": "Email já cadastrado", "success": False}), 409
+
+        hashed_password = generate_password_hash(data['password'])
+        user = User(
+            email=data['email'],
+            password_hash=hashed_password,
+            role='establishment'
+        )
+        db.session.add(user)
+        db.session.flush()  # Obtemos o user.id antes do commit
+
+        required_estab_fields = ['name', 'address', 'neighborhood', 'type']
+        for field in required_estab_fields:
+            if field not in data:
+                return jsonify({"success": False, "error": f"Campo obrigatório: {field}"}), 400
 
         establishment = Establishment(
-            user_id=data.get('user_id'),  # <-- adicione esta linha
+            user_id=user.id,
             name=data['name'],
             description=data.get('description', ''),
             address=data['address'],
@@ -107,7 +125,7 @@ def create_establishment():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
-
+        
 @establishment_bp.route('/establishments/<int:establishment_id>', methods=['PUT'])
 @cross_origin()
 def update_establishment(establishment_id):
