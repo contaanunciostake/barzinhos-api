@@ -32,12 +32,15 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 jwt.init_app(app)
 db.init_app(app)
 
-# CORS: permitir apenas o domínio do front
-CORS(app, resources={r"/api/*": {"origins": [
-    "https://barzinhos-front.onrender.com",
-    "http://localhost:5173",
-    "https://barzinhos-api.onrender.com" # Adicionado para permitir chamadas da própria API, se necessário
-]}}, supports_credentials=True, allow_headers="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+origins = os.getenv("CORS_ORIGINS", "").split(",")
+
+CORS(
+    app,
+    resources={r"/api/*": {"origins": origins}},
+    supports_credentials=True,
+    allow_headers="*",
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
 
 
 # Blueprints
