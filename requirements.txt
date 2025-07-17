@@ -6,7 +6,5 @@ Pillow==11.2.1
 requests==2.32.4
 SQLAlchemy==2.0.41
 PyJWT==2.10.1
-
-
 mercadopago==2.3.0
-
+psycopg2-binary
