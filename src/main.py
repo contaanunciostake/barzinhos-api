@@ -78,7 +78,7 @@ def serve_static(filename):
     static_dir = os.path.join(os.path.dirname(__file__), '..', 'static')
     return send_from_directory(static_dir, filename)
 
-# Criar tabelas
+# Criar tabelas e rodar populate se necessário
 with app.app_context():
     # Criar diretórios necessários
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -86,7 +86,18 @@ with app.app_context():
     os.makedirs(profiles_dir, exist_ok=True)
     db_dir = os.path.join(os.path.dirname(__file__), 'database')
     os.makedirs(db_dir, exist_ok=True)
+
+    # Criar tabelas
     db.create_all()
+
+    # Executar populate apenas se for PostgreSQL e o banco estiver vazio
+    if database_url:
+        try:
+            if User.query.count() == 0:
+                print("🔄 Executando populate automaticamente no ambiente de produção...")
+                import populate
+        except Exception as e:
+            print(f"❌ Erro ao executar populate automaticamente: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
