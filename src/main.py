@@ -3,13 +3,14 @@ import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory, request, make_response
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from src.models.base import db
 from src.routes.user import user_bp
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False  # Evita redirect 308 entre rotas com/sem barra
 
 # Configurações
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '1657victOr@')
@@ -29,27 +30,21 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'establishments')
 
 # Configuração de CORS
-cors_origins = os.environ.get('CORS_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://localhost:5175,https://barzinhos-front-tgjm.vercel.app')
-cors_origins_list = [origin.strip() for origin in cors_origins.split(',')]
+cors_origins = os.environ.get(
+    'CORS_ORIGINS',
+    'http://localhost:5173,http://localhost:5174,http://localhost:5175,https://barzinhos-front-tgjm.vercel.app'
+)
 
-# Inicializar extensões
-cors = CORS(app, 
-     origins=cors_origins_list, 
+cors_origins_list = "*" if cors_origins.strip() == "*" else [origin.strip() for origin in cors_origins.split(',')]
+
+CORS(app,
+     origins=cors_origins_list,
      supports_credentials=True,
      allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
      expose_headers=['Content-Type', 'Authorization'])
 
-# Handler manual para OPTIONS
-@app.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        response = make_response()
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
-        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
-        response.headers.add('Access-Control-Allow-Credentials', "true")
-        return response
+# Inicializar extensões
 jwt = JWTManager(app)
 db.init_app(app)
 
@@ -85,12 +80,10 @@ def serve_static(filename):
 
 # Criar tabelas
 with app.app_context():
-    # Criar diretório de uploads se não existir
+    # Criar diretórios necessários
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    # Criar diretório de imagens de perfil se não existir
     profiles_dir = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'profiles')
     os.makedirs(profiles_dir, exist_ok=True)
-    # Criar diretório do banco de dados se não existir
     db_dir = os.path.join(os.path.dirname(__file__), 'database')
     os.makedirs(db_dir, exist_ok=True)
     db.create_all()
