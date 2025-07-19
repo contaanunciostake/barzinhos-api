@@ -12,8 +12,8 @@ from src.routes.user import user_bp
 app = Flask(__name__)
 
 # Configurações
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'asdf#FGSgvasgf$5$WGT')
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '1657victOr@')
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', '1657victOr@')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Token não expira para desenvolvimento
 
 # Configuração do banco de dados
@@ -29,7 +29,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'establishments')
 
 # Configuração de CORS
-cors_origins = os.environ.get('CORS_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://localhost:5175,https://barzinhos-front-83be.vercel.app,https://barzinhos-front-novo.vercel.app')
+cors_origins = os.environ.get('CORS_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://localhost:5175,https://barzinhos-front-tgjm.vercel.app')
 cors_origins_list = [origin.strip() for origin in cors_origins.split(',')]
 
 # Inicializar extensões
