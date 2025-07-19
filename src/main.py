@@ -32,7 +32,7 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'sta
 # Configuração de CORS
 cors_origins = os.environ.get(
     'CORS_ORIGINS',
-    'http://localhost:5173,http://localhost:5174,http://localhost:5175,https://barzinhos-front-tgjm.vercel.app'
+    'http://localhost:5173,http://localhost:5174,http://localhost:5175,https://barzinhos-front-tgjm.vercel.app,https://barzinhos-front-yocb.vercel.app'
 )
 
 cors_origins_list = "*" if cors_origins.strip() == "*" else [origin.strip() for origin in cors_origins.split(',')]
