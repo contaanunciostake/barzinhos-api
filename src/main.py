@@ -48,6 +48,9 @@ CORS(app,
 jwt = JWTManager(app)
 db.init_app(app)
 
+from src.models.fitbit import FitbitUser, FitbitActivity, FitbitSubscription
+
+
 # Importar todos os modelos para garantir que as tabelas sejam criadas
 from src.models.user import User
 from src.models.establishment import Establishment, EstablishmentImage
@@ -71,6 +74,9 @@ app.register_blueprint(payment_bp, url_prefix='/api/payments')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
 app.register_blueprint(review_bp, url_prefix='/api/reviews')
 app.register_blueprint(geo_bp, url_prefix='/api/geo')
+
+from src.routes.fitbit import fitbit_bp
+app.register_blueprint(fitbit_bp, url_prefix='/api/fitbit')
 
 # Rota para servir imagens estáticas
 @app.route('/static/<path:filename>')
